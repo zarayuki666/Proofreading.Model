@@ -40,6 +40,20 @@
         </div>
         <p class="muted">Cloudflare Worker 接口：<code>POST /api/evaluate</code></p>
       </aside>
+    <h1>司法合规驾驶舱（Cloudflare Worker 版 API Demo）</h1>
+    <p>将规则引擎部署到 Cloudflare Workers。你可以在此提交 JSON 测试 <code>/api/evaluate</code>（支持 contributions 与 raw_scores 两种入参）。</p>
+
+    <textarea id="payload">{
+  "case_ctx": {
+    "case_id": "CASE-DEMO-001",
+    "role": "专业人员"
+  },
+  "raw_scores": [
+    {"key":"a3_1","label":"家庭沟通","score":4},
+    {"key":"b1_2","label":"暴力攻击倾向","score":4,"hard":true},
+    {"key":"e2","label":"有害内容接触","score":5,"hard":true}
+  ]
+}</textarea>
 
       <main>
         <header class="header card">
