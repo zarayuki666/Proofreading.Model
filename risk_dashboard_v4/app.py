@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import uuid
+from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -41,11 +42,12 @@ st.set_page_config(
 
 APP_VERSION = os.getenv("APP_VERSION", "0.3.0")
 UI_BUILD = os.getenv("UI_BUILD", "checkbox_grid_v5")
+BASE_DIR = Path(__file__).resolve().parent
 
 # ======== 加载 ML 模型（可选） ========
 ML_BUNDLE = None
 try:
-    ML_BUNDLE = joblib.load("ml_risk_model.pkl")
+    ML_BUNDLE = joblib.load(BASE_DIR / "ml_risk_model.pkl")
 except Exception:
     ML_BUNDLE = None
 
@@ -386,7 +388,7 @@ for parent_label, group in QUESTIONS_GROUPS.items():
 RAW_SCALE_VALUES: Dict[str, float] = {}
 
 # ---------- 读取校准配置 & 身份选择 ----------
-ADJ_CFG = os.getenv("ADJ_CFG", "adjustment.json")
+ADJ_CFG = os.getenv("ADJ_CFG", str(BASE_DIR / "adjustment.json"))
 
 try:
     with open(ADJ_CFG, "r", encoding="utf-8") as f:
@@ -394,13 +396,15 @@ try:
 except Exception:
     ADJ = {}
 
-student_type = st.session_state.get("student_type", "在校学生")
-
 ROLE_MAP = {
     "在校学生": "student",
     "辍学/已离校青少年": "dropout",
 }
-CURRENT_ROLE = ROLE_MAP.get(student_type, "ALL")
+
+
+def _get_current_role() -> str:
+    current_student_type = st.session_state.get("student_type", "在校学生")
+    return ROLE_MAP.get(current_student_type, "ALL")
 
 # 这类题目在生成 adjustment.json 时就已经做过 1-risk 的处理
 JSON_PROTECTIVE_KEYS = {"f1"}  # 情感支持
@@ -432,7 +436,8 @@ def adjust_score(q_key: str, raw_v: int, map_to: str = "risk") -> float:
     - map_to == "protection"→ 一般做 1 - 风险，表示保护强度
     """
     q_cfg = ADJ.get(q_key, {})
-    role_cfg = q_cfg.get(CURRENT_ROLE) or q_cfg.get("ALL") or {}
+    current_role = _get_current_role()
+    role_cfg = q_cfg.get(current_role) or q_cfg.get("ALL") or {}
     mp = role_cfg.get("map", {})
 
     val01 = mp.get(str(int(raw_v)))
@@ -947,12 +952,13 @@ def _compute_evaluation(case_ctx: Dict[str, Any]) -> Dict[str, Any]:
         if is_hard and (r > 0 or n > 0 or p > 0):
             # 题目 label 取：子题显示“父题 - 子题”
             parent = SUBKEY_TO_PARENT.get(k)
-            label = f"{parent} · {qconf.get('label', k)}" if parent else qconf.get("label", k)
+            q_title = qconf.get("title", qconf.get("label", k))
+            label = f"{parent} · {q_title}" if parent else q_title
             hard_flags.append(label)
 
         # 记录贡献（用于 TOP 因子 / 专业研判）
         parent = SUBKEY_TO_PARENT.get(k)
-        qlabel = qconf.get("label", k)
+        qlabel = qconf.get("title", qconf.get("label", k))
         if parent:
             qlabel = f"{parent} · {qlabel}"
         contributions.append(
