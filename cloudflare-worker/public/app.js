@@ -20,7 +20,8 @@ const FACTOR_CATALOG = [
 const state = {
   logs: [],
   result: null,
-  factors: [],
+  schema: null,
+  responses: {},
 };
 
 const $ = (id) => document.getElementById(id);
@@ -54,6 +55,7 @@ function alertClass(level = "") {
 }
 
 function sop(level = "") {
+  if (level.includes("红色")) return ["立即启动危机干预小组", "跨部门联动处置", "按日复评与留痕"];
   if (level.includes("红色")) return ["立即启动危机干预", "多部门会商处置", "按日复评与留痕"];
   if (level.includes("黄色")) return ["纳入重点关注", "制定个性化帮扶计划", "按周复评"];
   if (level.includes("蓝色")) return ["学校社区协同关注", "补齐保护性资源", "常态跟踪"];
@@ -72,11 +74,25 @@ function getCaseCtx() {
 
 function renderHeader() {
   const ctx = getCaseCtx();
+  $("headerMeta").innerHTML = `版本：Cloudflare v3 · 案件：${ctx.case_id} · 角色：${ctx.role}`;
   $("headerMeta").innerHTML = `版本：Cloudflare v2 · 案件：${ctx.case_id} · 角色：${ctx.role}`;
 }
 
-function factorRow(f, i) {
+function ensureResponseForQuestion(qKey, qCfg) {
+  if (state.responses[qKey]) return;
+  if (qCfg.type === "scale") state.responses[qKey] = { score: 0 };
+  if (qCfg.type === "group") state.responses[qKey] = { subs: Object.fromEntries(qCfg.subquestions.map((s) => [s.key, 0])) };
+  if (qCfg.type === "mcq") state.responses[qKey] = { selected: 0 };
+  if (qCfg.type === "multi") state.responses[qKey] = { selected: [] };
+  if (qCfg.type === "hybrid") state.responses[qKey] = { selected: 0, scale: 0 };
+  if (qCfg.type === "hybrid_multi") state.responses[qKey] = { selected: [], scale: 0 };
+}
+
+function renderScaleInput(name, value, min = 0, max = 5) {
   return `
+    <div class="scale-row">
+      <input type="range" min="${min}" max="${max}" step="1" value="${value}" data-name="${name}" data-kind="range" />
+      <input type="number" min="${min}" max="${max}" step="1" value="${value}" data-name="${name}" data-kind="number" />
     <div class="factor-item">
       <div><b>${f.key}</b></div>
       <div>${f.label}</div>
@@ -87,7 +103,178 @@ function factorRow(f, i) {
     </div>`;
 }
 
+function renderQuestion(qKey, qCfg) {
+  ensureResponseForQuestion(qKey, qCfg);
+  const r = state.responses[qKey];
+  if (qCfg.type === "scale") {
+    return `<div class="q-card"><h4>${qCfg.title}</h4><p class="small">${qCfg.scale_label || "量表评分"}</p>${renderScaleInput(`${qKey}.score`, r.score)}</div>`;
+  }
+
+  if (qCfg.type === "group") {
+    const subs = qCfg.subquestions
+      .map((s) => `<div class="sub-q"><label>${s.title}</label><p class="small">${s.scale_label || "量表评分"}</p>${renderScaleInput(`${qKey}.subs.${s.key}`, r.subs[s.key] ?? 0)}</div>`)
+      .join("");
+    return `<div class="q-card"><h4>${qCfg.title}</h4>${subs}</div>`;
+  }
+
+  if (qCfg.type === "mcq") {
+    const ops = qCfg.options
+      .map((op, i) => `<label class="op"><input type="radio" name="${qKey}.selected" value="${i}" ${Number(r.selected) === i ? "checked" : ""} /> ${op.label}</label>`)
+      .join("");
+    return `<div class="q-card"><h4>${qCfg.title}</h4>${ops}</div>`;
+  }
+
+  if (qCfg.type === "multi") {
+    const ops = qCfg.options
+      .map((op, i) => `<label class="op"><input type="checkbox" data-name="${qKey}.selected" value="${i}" ${(r.selected || []).includes(i) ? "checked" : ""} /> ${op.label}</label>`)
+      .join("");
+    return `<div class="q-card"><h4>${qCfg.title}</h4>${ops}</div>`;
+  }
+
+  if (qCfg.type === "hybrid") {
+    const ops = qCfg.mcq
+      .map((op, i) => `<label class="op"><input type="radio" name="${qKey}.selected" value="${i}" ${Number(r.selected) === i ? "checked" : ""} /> ${op.label}</label>`)
+      .join("");
+    const selected = qCfg.mcq[Number(r.selected)] || {};
+    const scale = selected.activates_scale ? `<div class="sub-q"><p class="small">${qCfg.scale?.scale_label || "补充量表"}</p>${renderScaleInput(`${qKey}.scale`, r.scale ?? 0)}</div>` : "";
+    return `<div class="q-card"><h4>${qCfg.title}</h4>${ops}${scale}</div>`;
+  }
+
+  if (qCfg.type === "hybrid_multi") {
+    const ops = qCfg.mcq_multi
+      .map((op, i) => `<label class="op"><input type="checkbox" data-name="${qKey}.selected" value="${i}" ${(r.selected || []).includes(i) ? "checked" : ""} /> ${op.label}</label>`)
+      .join("");
+    const activated = (r.selected || []).some((i) => qCfg.mcq_multi[i]?.activates_scale);
+    const scale = activated ? `<div class="sub-q"><p class="small">${qCfg.scale?.scale_label || "补充量表"}</p>${renderScaleInput(`${qKey}.scale`, r.scale ?? 0)}</div>` : "";
+    return `<div class="q-card"><h4>${qCfg.title}</h4>${ops}${scale}</div>`;
+  }
+
+  return `<div class="q-card"><h4>${qCfg.title || qKey}</h4><p class="small">暂未支持题型：${qCfg.type}</p></div>`;
+}
+
 function renderCollect() {
+  if (!state.schema) {
+    $("collect").innerHTML = `<div class="card"><p>问卷配置加载中...</p></div>`;
+    return;
+  }
+
+  const sections = Object.entries(state.schema.QUESTIONS_GROUPS)
+    .map(([sName, sec]) => {
+      const qs = Object.entries(sec)
+        .map(([qKey, qCfg]) => renderQuestion(qKey, qCfg))
+        .join("");
+      return `<div class="card" style="margin-bottom:10px"><h3>${sName}</h3>${qs}</div>`;
+    })
+    .join("");
+
+  $("collect").innerHTML = `${sections}<div class="card"><button id="resetQuestionnaire">重置整套问卷</button></div>`;
+
+  $("collect").querySelectorAll('input[type="range"], input[type="number"]').forEach((el) => {
+    const apply = (raw) => {
+      const v = Math.max(0, Math.min(5, Number(raw) || 0));
+      const name = el.dataset.name;
+      const path = name.split(".");
+      if (path.length === 2) state.responses[path[0]][path[1]] = v;
+      if (path.length === 3) state.responses[path[0]][path[1]][path[2]] = v;
+      renderCollect();
+    };
+    el.addEventListener("input", (e) => apply(e.target.value));
+    el.addEventListener("change", (e) => apply(e.target.value));
+  });
+
+  $("collect").querySelectorAll('input[type="radio"]').forEach((el) => {
+    el.addEventListener("change", (e) => {
+      const [qKey, field] = e.target.name.split(".");
+      state.responses[qKey][field] = Number(e.target.value);
+      renderCollect();
+    });
+  });
+
+  $("collect").querySelectorAll('input[type="checkbox"][data-name]').forEach((el) => {
+    el.addEventListener("change", (e) => {
+      const [qKey, field] = e.target.dataset.name.split(".");
+      const idx = Number(e.target.value);
+      const arr = new Set(state.responses[qKey][field] || []);
+      if (e.target.checked) arr.add(idx);
+      else arr.delete(idx);
+      state.responses[qKey][field] = [...arr].sort((a, b) => a - b);
+      renderCollect();
+    });
+  });
+
+  $("resetQuestionnaire")?.addEventListener("click", () => {
+    state.responses = {};
+    renderCollect();
+  });
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function buildContributions() {
+  const out = [];
+  const groups = state.schema.QUESTIONS_GROUPS;
+
+  Object.values(groups).forEach((sec) => {
+    Object.entries(sec).forEach(([qKey, qCfg]) => {
+      const r = state.responses[qKey] || {};
+
+      if (qCfg.type === "scale") {
+        const score = Number(r.score) || 0;
+        out.push({ key: qKey, label: qCfg.title, risk: score, neutral_raw: 0, protection: 0, hard: qCfg.hard_threshold ? score >= qCfg.hard_threshold : false, explain: `scale=${score}` });
+        return;
+      }
+
+      if (qCfg.type === "group") {
+        (qCfg.subquestions || []).forEach((s) => {
+          const score = Number(r.subs?.[s.key]) || 0;
+          out.push({ key: s.key, label: s.title, risk: score, neutral_raw: 0, protection: 0, hard: s.hard_threshold ? score >= s.hard_threshold : false, explain: `scale=${score}` });
+        });
+        return;
+      }
+
+      if (qCfg.type === "mcq") {
+        const op = qCfg.options?.[Number(r.selected) || 0] || { r: 0, n: 0, p: 0 };
+        out.push({ key: qKey, label: qCfg.title, risk: Number(op.r) || 0, neutral_raw: Number(op.n) || 0, protection: Number(op.p) || 0, hard: Boolean(op.hard_trigger), explain: op.label || "" });
+        return;
+      }
+
+      if (qCfg.type === "multi") {
+        const selected = (r.selected || []).map((i) => qCfg.options[i]).filter(Boolean);
+        let risk = selected.reduce((s, op) => s + (Number(op.r) || 0), 0);
+        const neutral = selected.reduce((s, op) => s + (Number(op.n) || 0), 0);
+        const protection = selected.reduce((s, op) => s + (Number(op.p) || 0), 0);
+        if (typeof qCfg.max_risk === "number") risk = clamp(risk, 0, qCfg.max_risk);
+        out.push({ key: qKey, label: qCfg.title, risk, neutral_raw: neutral, protection, hard: selected.some((op) => op.hard_trigger), explain: selected.map((op) => op.label).join("；") || "未选择" });
+        return;
+      }
+
+      if (qCfg.type === "hybrid") {
+        const op = qCfg.mcq?.[Number(r.selected) || 0] || { r: 0, n: 0, p: 0 };
+        const scaleActivated = Boolean(op.activates_scale);
+        const scaleVal = scaleActivated ? Number(r.scale) || 0 : 0;
+        const scaleHard = qCfg.scale?.hard_threshold ? scaleVal >= qCfg.scale.hard_threshold : false;
+        out.push({ key: qKey, label: qCfg.title, risk: (Number(op.r) || 0) + scaleVal, neutral_raw: Number(op.n) || 0, protection: Number(op.p) || 0, hard: Boolean(op.hard_trigger) || scaleHard, explain: `${op.label || ""}${scaleActivated ? ` + scale=${scaleVal}` : ""}` });
+        return;
+      }
+
+      if (qCfg.type === "hybrid_multi") {
+        const selectedOps = (r.selected || []).map((i) => qCfg.mcq_multi[i]).filter(Boolean);
+        const scaleActivated = selectedOps.some((op) => op.activates_scale);
+        const scaleVal = scaleActivated ? Number(r.scale) || 0 : 0;
+        const scaleHard = qCfg.scale?.hard_threshold ? scaleVal >= qCfg.scale.hard_threshold : false;
+        out.push({
+          key: qKey,
+          label: qCfg.title,
+          risk: selectedOps.reduce((s, op) => s + (Number(op.r) || 0), 0) + scaleVal,
+          neutral_raw: selectedOps.reduce((s, op) => s + (Number(op.n) || 0), 0),
+          protection: selectedOps.reduce((s, op) => s + (Number(op.p) || 0), 0),
+          hard: selectedOps.some((op) => op.hard_trigger) || scaleHard,
+          explain: `${selectedOps.map((op) => op.label).join("；") || "未选择"}${scaleActivated ? ` + scale=${scaleVal}` : ""}`,
+        });
+      }
+    });
   const rows = state.factors.map(factorRow).join("");
   $("collect").innerHTML = `
     <div class="card">
@@ -133,6 +320,8 @@ function renderCollect() {
     addLog("factor_reset", { n: state.factors.length });
     renderCollect();
   });
+
+  return out;
 }
 
 function renderCockpit() {
@@ -141,6 +330,7 @@ function renderCockpit() {
     $("cockpit").innerHTML = `<div class="card"><h3>⚖️ 司法合规驾驶舱</h3><p class="small">尚未生成研判结果，请先点击“生成合规研判”。</p></div>`;
     return;
   }
+  const top = (r.contributions || []).slice(0, 12).map((x) => `<tr><td>${x.key}</td><td>${x.label}</td><td>${x.net?.toFixed?.(2) ?? x.net}</td><td>${x.explain || "-"}</td></tr>`).join("");
   const top = (r.contributions || []).slice(0, 10).map((x) => `<tr><td>${x.key}</td><td>${x.label}</td><td>${x.net?.toFixed?.(2) ?? x.net}</td><td>${x.explain || "-"}</td></tr>`).join("");
   $("cockpit").innerHTML = `
     <div class="grid4">
@@ -167,9 +357,10 @@ function renderRules() {
     <div class="card">
       <h3>🔎 规则命中解释与可解释性</h3>
       <ul>
+        <li>问卷题型：scale / mcq / multi / group / hybrid / hybrid_multi（来源于 app.py）。</li>
         <li>输入模式：raw_scores（0~5）→ adjustment 映射成 risk。</li>
         <li>中性折扣：neutral_eff = neutral_raw × 0.30。</li>
-        <li>保护限幅：按硬触发和核心风险动态限制抵消比例。</li>
+        <li>保护限幅：按硬触发与核心风险动态限幅。</li>
       </ul>
       ${r ? `<p>净风险：<b>${Number(r.net_risk_score).toFixed(2)}</b>；预警：<b>${r.alert.level}</b>；研判编号：<code>${r.eval_id}</code></p>` : "<p class='small'>未生成研判结果，暂无法展示命中细节。</p>"}
     </div>`;
@@ -181,7 +372,6 @@ function renderAudit() {
   $("audit").innerHTML = `
     <div class="card">
       <h3>🗂️ 审计留痕与导出</h3>
-      <p class="small">可下载当前研判 JSON（脱敏由你在提交前自行处理）。</p>
       <button id="downloadJson" ${r ? "" : "disabled"}>⬇️ 下载研判 JSON</button>
       <table class="table" style="margin-top:10px"><thead><tr><th>时间</th><th>事件</th><th>载荷</th></tr></thead><tbody>${rows || "<tr><td colspan='3'>暂无日志</td></tr>"}</tbody></table>
     </div>`;
@@ -196,12 +386,18 @@ function renderAudit() {
 }
 
 function renderSettings() {
+  $("settings").innerHTML = `<div class="card"><h3>⚙️ 系统设置</h3><ul><li>当前部署：Cloudflare Workers + Static Assets</li><li>问卷配置：public/questionnaire.schema.json（由 app.py 生成）</li><li>建议：生产开启 Cloudflare Access、WAF 与速率限制。</li></ul></div>`;
   $("settings").innerHTML = `<div class="card"><h3>⚙️ 系统设置</h3><ul><li>当前部署：Cloudflare Workers + Static Assets</li><li>接口：POST /api/evaluate（raw_scores）</li><li>建议：生产开启 Cloudflare Access、WAF 与速率限制。</li></ul></div>`;
 }
 
 async function evaluateNow() {
+  if (!state.schema) {
+    alert("问卷配置未加载完成");
+    return;
+  }
   const payload = {
     case_ctx: getCaseCtx(),
+    contributions: buildContributions(),
     raw_scores: state.factors.map((x) => ({
       key: x.key,
       label: x.label,
@@ -228,6 +424,27 @@ async function evaluateNow() {
   renderAll();
 }
 
+function seedQuestionnaire() {
+  if (!state.schema) return;
+  state.responses = {};
+  Object.values(state.schema.QUESTIONS_GROUPS).forEach((sec) => {
+    Object.entries(sec).forEach(([qKey, qCfg]) => {
+      ensureResponseForQuestion(qKey, qCfg);
+      if (qCfg.type === "scale") state.responses[qKey].score = 3;
+      if (qCfg.type === "group") Object.keys(state.responses[qKey].subs).forEach((k) => (state.responses[qKey].subs[k] = 3));
+      if (qCfg.type === "mcq") state.responses[qKey].selected = Math.min(1, (qCfg.options || []).length - 1);
+      if (qCfg.type === "multi") state.responses[qKey].selected = [0];
+      if (qCfg.type === "hybrid") {
+        state.responses[qKey].selected = Math.min(1, (qCfg.mcq || []).length - 1);
+        state.responses[qKey].scale = 3;
+      }
+      if (qCfg.type === "hybrid_multi") {
+        state.responses[qKey].selected = [0];
+        state.responses[qKey].scale = 3;
+      }
+    });
+  });
+  addLog("seed_loaded", { questions: Object.keys(state.responses).length });
 function seedFactors() {
   state.factors = buildDefaultFactors();
   const boost = {
@@ -266,13 +483,30 @@ function renderAll() {
   renderSettings();
 }
 
+async function loadSchema() {
+  const res = await fetch("/questionnaire.schema.json", { cache: "no-store" });
+  if (!res.ok) throw new Error("加载问卷配置失败");
+  state.schema = await res.json();
+}
+
+async function init() {
 function init() {
   state.factors = buildDefaultFactors();
   $("caseId").value = defaultCaseId();
   ["role", "caseId", "org", "evaluator", "studentType"].forEach((id) => $(id).addEventListener("input", renderHeader));
   $("btnGenerate").addEventListener("click", evaluateNow);
-  $("btnSeed").addEventListener("click", seedFactors);
+  $("btnSeed").addEventListener("click", seedQuestionnaire);
   initTabs();
+
+  try {
+    await loadSchema();
+    addLog("schema_loaded", { sections: Object.keys(state.schema.QUESTIONS_GROUPS || {}).length });
+  } catch (e) {
+    addLog("schema_failed", { error: e.message });
+    alert(`问卷配置加载失败: ${e.message}`);
+  }
+
+  addLog("app_loaded", { version: "cloudflare-ui-v3" });
   addLog("app_loaded", { version: "cloudflare-ui-v2" });
   renderAll();
 }
