@@ -4,9 +4,7 @@
 
 - `src/index.ts`：HTTP 路由（`/health`、`/api/evaluate`）
 - `src/engine.ts`：规则引擎核心计算
-- `public/index.html`：完整驾驶舱页面（含侧栏+Tabs）
-- `public/app.js`：前端交互逻辑（采集、研判、审计导出）
-- `public/style.css`：暗色主题样式
+- `public/index.html`：静态测试页面
 
 ## 接口约定
 

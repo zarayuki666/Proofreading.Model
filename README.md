@@ -73,7 +73,7 @@ APP_VERSION=0.4.0 UI_BUILD=prod streamlit run app.py
 - `cloudflare-worker/`：Cloudflare Worker + 静态页面 Demo
 - 提供 `POST /api/evaluate` 风险研判接口（规则引擎）
 - 提供 `GET /health` 健康检查
-- `public/index.html + app.js + style.css` 为完整驾驶舱前端（含侧栏、Tab、采集面板、规则解释、审计导出）
+- `public/index.html` 可直接在 Pages 上作为测试页面调用 API
 
 ### 1) 本地调试 Worker
 

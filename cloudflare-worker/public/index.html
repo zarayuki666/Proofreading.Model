@@ -3,64 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>司法合规驾驶舱 · Cloudflare 版</title>
-    <link rel="stylesheet" href="/style.css" />
+    <title>司法合规驾驶舱 · Cloudflare Worker</title>
+    <style>
+      body{font-family:system-ui,-apple-system,sans-serif;max-width:980px;margin:24px auto;padding:0 16px;background:#0b1220;color:#e6edf7}
+      textarea{width:100%;height:300px;background:#111a2b;color:#e6edf7;border:1px solid #2b3a57;border-radius:8px;padding:12px}
+      button{margin-top:12px;padding:10px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+      pre{background:#111a2b;border:1px solid #2b3a57;padding:12px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+      code{background:#162036;padding:2px 6px;border-radius:4px}
+    </style>
   </head>
   <body>
-    <div class="layout">
-      <aside class="sidebar card">
-        <h2>⚙️ 案件上下文</h2>
-        <label>使用角色
-          <select id="role">
-            <option>专业人员</option>
-            <option>管理员</option>
-            <option>观察者</option>
-          </select>
-        </label>
-        <label>案件编号
-          <input id="caseId" />
-        </label>
-        <label>机构/单位
-          <input id="org" />
-        </label>
-        <label>评估人员
-          <input id="evaluator" />
-        </label>
-        <label>学生类型
-          <select id="studentType">
-            <option>在校学生</option>
-            <option>辍学/已离校青少年</option>
-          </select>
-        </label>
-        <button id="btnGenerate" class="primary">🚦 生成合规研判</button>
-        <button id="btnSeed">⚡ 填充示例因子</button>
-      </aside>
+    <h1>司法合规驾驶舱（Cloudflare Worker 版 API Demo）</h1>
+    <p>将规则引擎部署到 Cloudflare Workers。你可以在此直接提交 JSON 测试 <code>/api/evaluate</code>。</p>
 
-      <main class="main">
-        <section class="header card">
-          <div>
-            <h1>⚖️ 司法合规驾驶舱（Cloudflare 完整版）</h1>
-            <p>未成年人风险动态评估 · 分级干预 · 合规留痕</p>
-          </div>
-          <div class="muted" id="headerMeta"></div>
-        </section>
+    <textarea id="payload">{
+  "case_ctx": {
+    "case_id": "CASE-DEMO-001",
+    "role": "专业人员"
+  },
+  "contributions": [
+    {"key":"a1","label":"监护状况","risk":4.4,"neutral_raw":1,"protection":0,"hard":false},
+    {"key":"b1_2","label":"暴力攻击倾向","risk":3,"neutral_raw":0,"protection":0,"hard":true},
+    {"key":"f1","label":"情感支持","risk":0,"neutral_raw":0,"protection":2,"hard":false}
+  ]
+}</textarea>
 
-        <nav class="tabs">
-          <button class="tab active" data-tab="cockpit">⚖️ 司法合规驾驶舱</button>
-          <button class="tab" data-tab="collect">🧾 评估采集面板</button>
-          <button class="tab" data-tab="rules">🔎 规则命中解释</button>
-          <button class="tab" data-tab="audit">🗂️ 审计留痕与导出</button>
-          <button class="tab" data-tab="settings">⚙️ 系统设置</button>
-        </nav>
+    <button id="run">生成研判</button>
+    <pre id="result">等待请求...</pre>
 
-        <section id="cockpit" class="panel active"></section>
-        <section id="collect" class="panel"></section>
-        <section id="rules" class="panel"></section>
-        <section id="audit" class="panel"></section>
-        <section id="settings" class="panel"></section>
-      </main>
-    </div>
-
-    <script type="module" src="/app.js"></script>
+    <script>
+      document.getElementById('run').addEventListener('click', async () => {
+        const resultEl = document.getElementById('result');
+        try {
+          const payload = JSON.parse(document.getElementById('payload').value);
+          const res = await fetch('/api/evaluate', {
+            method: 'POST',
+            headers: {'content-type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          resultEl.textContent = '请求失败: ' + e.message;
+        }
+      });
+    </script>
   </body>
 </html>
