@@ -8,6 +8,6 @@ button{border:1px solid var(--line);background:#0f1f41;color:var(--txt);padding:
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.kpi{background:#0c2042;border:1px solid var(--line);border-radius:12px;padding:12px}.kpi .v{font-size:24px;font-weight:700}
 .table{width:100%;border-collapse:collapse}.table th,.table td{border-bottom:1px solid #2b3d5f;padding:8px;text-align:left;font-size:13px}.small{font-size:12px;color:var(--muted)}
 .badge{display:inline-block;padding:5px 10px;border-radius:999px;font-weight:700}.green{background:#14532d}.blue{background:#1e3a8a}.yellow{background:#713f12}.red{background:#7f1d1d}
-.factor-list{display:grid;gap:8px}.factor-item{display:grid;grid-template-columns:1.4fr .6fr .6fr .6fr .5fr .8fr auto;gap:6px;align-items:center}
+.factor-list{display:grid;gap:8px}.factor-item{display:grid;grid-template-columns:.6fr 1.2fr .8fr .5fr .4fr 1fr;gap:6px;align-items:center}
 .factor-item input[type='checkbox']{width:18px;height:18px}.danger{background:#3f1111;border-color:#7f1d1d}
 @media (max-width:1100px){.layout{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}.factor-item{grid-template-columns:1fr 1fr 1fr}}
