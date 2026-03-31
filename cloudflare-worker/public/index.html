@@ -14,17 +14,17 @@
   </head>
   <body>
     <h1>司法合规驾驶舱（Cloudflare Worker 版 API Demo）</h1>
-    <p>将规则引擎部署到 Cloudflare Workers。你可以在此直接提交 JSON 测试 <code>/api/evaluate</code>。</p>
+    <p>将规则引擎部署到 Cloudflare Workers。你可以在此提交 JSON 测试 <code>/api/evaluate</code>（支持 contributions 与 raw_scores 两种入参）。</p>
 
     <textarea id="payload">{
   "case_ctx": {
     "case_id": "CASE-DEMO-001",
     "role": "专业人员"
   },
-  "contributions": [
-    {"key":"a1","label":"监护状况","risk":4.4,"neutral_raw":1,"protection":0,"hard":false},
-    {"key":"b1_2","label":"暴力攻击倾向","risk":3,"neutral_raw":0,"protection":0,"hard":true},
-    {"key":"f1","label":"情感支持","risk":0,"neutral_raw":0,"protection":2,"hard":false}
+  "raw_scores": [
+    {"key":"a3_1","label":"家庭沟通","score":4},
+    {"key":"b1_2","label":"暴力攻击倾向","score":4,"hard":true},
+    {"key":"e2","label":"有害内容接触","score":5,"hard":true}
   ]
 }</textarea>
 
