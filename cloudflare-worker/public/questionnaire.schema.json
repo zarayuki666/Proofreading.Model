@@ -1,0 +1,690 @@
+{
+  "MODULE_CONF": {
+    "a1": {
+      "label": "A1. 监护状况",
+      "risk": 1.1,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "a2": {
+      "label": "A2. 教养方式",
+      "risk": 1.0,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "a3_1": {
+      "label": "A3. 家庭沟通",
+      "risk": 0.7,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "a3_2": {
+      "label": "A3. 家庭冲突",
+      "risk": 0.8,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "b1_1": {
+      "label": "B1. 冲动",
+      "risk": 1.0,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "b1_2": {
+      "label": "B1. 攻击",
+      "risk": 1.0,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "b2": {
+      "label": "B2. 认知观念",
+      "risk": 0.8,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "b3": {
+      "label": "B3. 自我认同",
+      "risk": 0.9,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "c1": {
+      "label": "C1. 同伴关系",
+      "risk": 1.0,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "c2": {
+      "label": "C2. 社区环境",
+      "risk": 0.8,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "d1": {
+      "label": "D1. 在校表现",
+      "risk": 1.0,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "d2": {
+      "label": "D2. 法治教育",
+      "risk": 0.9,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "e1a": {
+      "label": "E1a. 上网时间",
+      "risk": 0.8,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "e1b": {
+      "label": "E1b. 深夜上网",
+      "risk": 0.9,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "e2": {
+      "label": "E2. 内容接触",
+      "risk": 1.1,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "e3": {
+      "label": "E3. 线上交往",
+      "risk": 1.0,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "f1": {
+      "label": "F1. 情感支持",
+      "risk": 0.8,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "f2": {
+      "label": "F2. 情感适应能力",
+      "risk": 0.9,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "g1": {
+      "label": "G1. 时间管理",
+      "risk": 0.8,
+      "neutral": 1.0,
+      "protection": 1.0
+    },
+    "g2": {
+      "label": "G2. 财务管理",
+      "risk": 0.7,
+      "neutral": 1.0,
+      "protection": 1.0
+    }
+  },
+  "QUESTIONS_GROUPS": {
+    "A. 家庭监护": {
+      "a1": {
+        "title": "监护状况",
+        "type": "multi",
+        "max_risk": 6,
+        "options": [
+          {
+            "label": "监护人积极参与（保护）",
+            "r": 0,
+            "n": 2,
+            "p": 5
+          },
+          {
+            "label": "单亲",
+            "r": 2,
+            "n": 3,
+            "p": 0
+          },
+          {
+            "label": "父母失业",
+            "r": 2,
+            "n": 2,
+            "p": 0
+          },
+          {
+            "label": "监护薄弱",
+            "r": 2,
+            "n": 1,
+            "p": 0
+          },
+          {
+            "label": "长期疾病",
+            "r": 3,
+            "n": 1,
+            "p": 0
+          },
+          {
+            "label": "流动",
+            "r": 3,
+            "n": 2,
+            "p": 0
+          },
+          {
+            "label": "留守",
+            "r": 3,
+            "n": 1,
+            "p": 0
+          },
+          {
+            "label": "父母常年不在",
+            "r": 3,
+            "n": 0,
+            "p": 0
+          },
+          {
+            "label": "父母失联",
+            "r": 3,
+            "n": 0,
+            "p": 0
+          },
+          {
+            "label": "事实无人抚养",
+            "r": 5,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true
+          }
+        ]
+      },
+      "a2": {
+        "title": "教养方式",
+        "type": "mcq",
+        "options": [
+          {
+            "label": "权威型（合理）",
+            "r": 0,
+            "n": 3,
+            "p": 4
+          },
+          {
+            "label": "传统型（强调规则）",
+            "r": 1,
+            "n": 4,
+            "p": 2
+          },
+          {
+            "label": "溺爱型教养",
+            "r": 3,
+            "n": 1,
+            "p": 0
+          },
+          {
+            "label": "忽视型教养",
+            "r": 3,
+            "n": 0,
+            "p": 0
+          },
+          {
+            "label": "暴力型教养",
+            "r": 5,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true
+          }
+        ]
+      },
+      "a3": {
+        "title": "家庭功能（沟通与冲突）",
+        "type": "group",
+        "subquestions": [
+          {
+            "key": "a3_1",
+            "title": "家庭沟通情况",
+            "type": "scale",
+            "scale_label": "沟通不畅程度（0=顺畅,5=极差）",
+            "map_to": "risk"
+          },
+          {
+            "key": "a3_2",
+            "title": "家庭冲突情况",
+            "type": "scale",
+            "scale_label": "冲突激烈程度（0=和谐,5=暴力冲突）",
+            "map_to": "risk"
+          }
+        ]
+      }
+    },
+    "B. 个体认知与心理": {
+      "b1": {
+        "title": "人格行为特征",
+        "type": "group",
+        "subquestions": [
+          {
+            "key": "b1_1",
+            "title": "冲动控制",
+            "type": "scale",
+            "scale_label": "易冲动程度（0=沉稳,5=极易失控）",
+            "map_to": "risk"
+          },
+          {
+            "key": "b1_2",
+            "title": "暴力攻击倾向",
+            "type": "scale",
+            "scale_label": "攻击性行为频次（0=无,5=经常）",
+            "map_to": "risk",
+            "hard_threshold": 4
+          }
+        ]
+      },
+      "b2": {
+        "title": "认知观念（极端/消极）",
+        "type": "hybrid",
+        "mcq": [
+          {
+            "label": "价值观积极",
+            "r": 0,
+            "n": 0,
+            "p": 5
+          },
+          {
+            "label": "受同伴影响",
+            "r": 1,
+            "n": 3,
+            "p": 1,
+            "activates_scale": true
+          },
+          {
+            "label": "价值观模糊",
+            "r": 1,
+            "n": 2,
+            "p": 1,
+            "activates_scale": true
+          },
+          {
+            "label": "偶有极端倾向",
+            "r": 3,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "极端激进",
+            "r": 4,
+            "n": 0,
+            "p": 0,
+            "activates_scale": true
+          }
+        ],
+        "scale": {
+          "scale_label": "极端程度（0=无,5=极强）",
+          "map_to": "risk",
+          "hard_threshold": 5
+        }
+      },
+      "b3": {
+        "title": "自我认同",
+        "type": "scale",
+        "scale_label": "自我认同问题程度（0=自信,5=混乱/自卑）",
+        "map_to": "risk"
+      }
+    },
+    "C. 社会交往": {
+      "c1": {
+        "title": "同伴关系",
+        "type": "hybrid",
+        "mcq": [
+          {
+            "label": "无不良同伴",
+            "r": 0,
+            "n": 5,
+            "p": 5
+          },
+          {
+            "label": "偶有接触不良同伴",
+            "r": 2,
+            "n": 1,
+            "p": 1,
+            "activates_scale": true
+          },
+          {
+            "label": "结交不良同伴",
+            "r": 3,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "加入不良群体",
+            "r": 4,
+            "n": 0,
+            "p": 0,
+            "activates_scale": true
+          }
+        ],
+        "scale": {
+          "scale_label": "受不良同伴影响强度（0=无,5=极强）",
+          "map_to": "risk",
+          "hard_threshold": 4
+        }
+      },
+      "c2": {
+        "title": "社区环境",
+        "type": "hybrid",
+        "mcq": [
+          {
+            "label": "社区资源丰富且治安好",
+            "r": 0,
+            "n": 3,
+            "p": 4
+          },
+          {
+            "label": "社区一般",
+            "r": 1,
+            "n": 2,
+            "p": 2,
+            "activates_scale": true
+          },
+          {
+            "label": "社区资源贫乏",
+            "r": 3,
+            "n": 1,
+            "p": 1,
+            "activates_scale": true
+          },
+          {
+            "label": "社区治安较差",
+            "r": 4,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "社区犯罪频发",
+            "r": 5,
+            "n": 1,
+            "p": 0,
+            "hard_trigger": true,
+            "activates_scale": true
+          },
+          {
+            "label": "高风险社区",
+            "r": 5,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true,
+            "activates_scale": true
+          }
+        ],
+        "scale": {
+          "scale_label": "受社区影响强度（0=无,5=极强）",
+          "map_to": "risk",
+          "hard_threshold": 4
+        }
+      }
+    },
+    "D. 学校教育": {
+      "d1": {
+        "title": "在校表现",
+        "type": "hybrid_multi",
+        "mcq_multi": [
+          {
+            "label": "积极学习",
+            "r": 0,
+            "n": 4,
+            "p": 4
+          },
+          {
+            "label": "偶尔缺课",
+            "r": 1,
+            "n": 3,
+            "p": 0
+          },
+          {
+            "label": "偶尔逃课/逃学",
+            "r": 2,
+            "n": 2,
+            "p": 0
+          },
+          {
+            "label": "长期旷课",
+            "r": 3,
+            "n": 2,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "经常逃学",
+            "r": 3,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "辍学",
+            "r": 4,
+            "n": 0,
+            "p": 0,
+            "activates_scale": true
+          }
+        ],
+        "scale": {
+          "scale_label": "逃学/旷课频次与持续性（0=无,5=非常频繁/持续）",
+          "map_to": "risk",
+          "hard_threshold": 4
+        }
+      },
+      "d2": {
+        "title": "法治教育覆盖",
+        "type": "hybrid",
+        "mcq": [
+          {
+            "label": "深度参与/法治活动活跃",
+            "r": 0,
+            "n": 3,
+            "p": 5,
+            "activates_scale": true
+          },
+          {
+            "label": "按课表开展",
+            "r": 1,
+            "n": 2,
+            "p": 2,
+            "activates_scale": true
+          },
+          {
+            "label": "偶尔宣传",
+            "r": 2,
+            "n": 1,
+            "p": 1,
+            "activates_scale": true
+          },
+          {
+            "label": "无法治教育",
+            "r": 3,
+            "n": 1,
+            "p": 0
+          }
+        ],
+        "scale": {
+          "scale_label": "法治教育学习效果（0=无效果,5=效果良好）",
+          "map_to": "protection"
+        }
+      }
+    },
+    "E. 网络行为": {
+      "e1a": {
+        "title": "上网时长/影响生活",
+        "type": "scale",
+        "scale_label": "对日常生活干扰程度（0=无,5=严重颠倒）",
+        "map_to": "risk"
+      },
+      "e1b": {
+        "title": "深夜违规上网",
+        "type": "scale",
+        "scale_label": "深夜上网频次（0=无,5=通宵）",
+        "map_to": "risk"
+      },
+      "e2": {
+        "title": "内容接触（是否接触有害内容）",
+        "type": "hybrid_multi",
+        "mcq_multi": [
+          {
+            "label": "主要接触正面/学习资源",
+            "r": 0,
+            "n": 3,
+            "p": 5
+          },
+          {
+            "label": "接触游戏内容",
+            "r": 1,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "接触色情内容",
+            "r": 2,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "接触诈骗信息",
+            "r": 3,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true,
+            "activates_scale": true
+          },
+          {
+            "label": "接触暴力/血腥内容",
+            "r": 4,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true,
+            "activates_scale": true
+          },
+          {
+            "label": "接触黑灰产信息",
+            "r": 5,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true,
+            "activates_scale": true
+          }
+        ],
+        "scale": {
+          "scale_label": "接触频次/沉浸程度（0=无,5=频繁）",
+          "map_to": "risk",
+          "hard_threshold": 5
+        }
+      },
+      "e3": {
+        "title": "线上交往行为",
+        "type": "multi",
+        "options": [
+          {
+            "label": "线上交往健康",
+            "r": 0,
+            "n": 3,
+            "p": 5
+          },
+          {
+            "label": "被网络欺凌/受害",
+            "r": 2,
+            "n": 2,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "接触不良社交圈",
+            "r": 3,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "参与/发起网络欺凌",
+            "r": 5,
+            "n": 0,
+            "p": 0,
+            "hard_trigger": true
+          }
+        ],
+        "scale": {
+          "scale_label": "受影响程度（0=无,5=极强）",
+          "map_to": "risk",
+          "hard_threshold": 4
+        }
+      }
+    },
+    "F. 情感发展": {
+      "f1": {
+        "title": "情感支持",
+        "type": "scale",
+        "scale_label": "获得家庭/社交关爱与支持（0=差,5=强）",
+        "map_to": "protection"
+      },
+      "f2": {
+        "title": "情感情绪调节能力",
+        "type": "scale",
+        "scale_label": "情绪调节困难程度（0=良好,5=困难）",
+        "map_to": "risk"
+      }
+    },
+    "G. 自我管理": {
+      "g1": {
+        "title": "时间管理/自律",
+        "type": "scale",
+        "scale_label": "时间管理问题程度（0=自律,5=完全无序）",
+        "map_to": "risk"
+      },
+      "g2": {
+        "title": "财务管理",
+        "type": "hybrid",
+        "mcq": [
+          {
+            "label": "理财能力良好",
+            "r": 0,
+            "n": 3,
+            "p": 5
+          },
+          {
+            "label": "无欠债",
+            "r": 0,
+            "n": 4,
+            "p": 2
+          },
+          {
+            "label": "偶尔冲动消费",
+            "r": 1,
+            "n": 2,
+            "p": 1,
+            "activates_scale": true
+          },
+          {
+            "label": "被诈骗",
+            "r": 3,
+            "n": 1,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "存在欠债",
+            "r": 3,
+            "n": 2,
+            "p": 0,
+            "activates_scale": true
+          },
+          {
+            "label": "严重财务问题/贷款",
+            "r": 4,
+            "n": 0,
+            "p": 0,
+            "activates_scale": true
+          }
+        ],
+        "scale": {
+          "scale_label": "理财观念/行为问题程度（0=良好,5=严重）",
+          "map_to": "risk",
+          "hard_threshold": 4
+        }
+      }
+    }
+  }
+}
