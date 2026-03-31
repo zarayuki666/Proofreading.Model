@@ -66,6 +66,41 @@ APP_VERSION=0.4.0 UI_BUILD=prod streamlit run app.py
 
 ---
 
+## Cloudflare Workers / Pages 部署（新增）
+
+考虑到 Cloudflare Pages/Workers 以前端与边缘函数为主，**不能直接原样运行 Streamlit**，本仓库新增了一个边缘部署目录：
+
+- `cloudflare-worker/`：Cloudflare Worker + 静态页面 Demo
+- 提供 `POST /api/evaluate` 风险研判接口（规则引擎）
+- 提供 `GET /health` 健康检查
+- `public/index.html` 可直接在 Pages 上作为测试页面调用 API
+
+### 1) 本地调试 Worker
+
+```bash
+cd cloudflare-worker
+npm install
+npm run dev
+```
+
+### 2) 部署到 Cloudflare Workers
+
+```bash
+cd cloudflare-worker
+npm install
+npm run deploy
+```
+
+### 3) 结合 Cloudflare Pages
+
+- 可将 `cloudflare-worker/public` 作为 Pages 静态站点目录；
+- 同时部署 Worker，或在 Pages Functions 中复用同样逻辑；
+- 页面端调用 `/api/evaluate` 获取研判结果。
+
+> 说明：当前 Worker 版本聚焦“规则引擎 API 化”，AI 模型（`ml_risk_model.pkl`）仍建议保留在 Python 服务侧运行。
+
+---
+
 ## 本次完善内容（针对“上传不完整”）
 
 1. **补全项目说明文档**：提供完整启动、目录、配置说明。
@@ -73,6 +108,7 @@ APP_VERSION=0.4.0 UI_BUILD=prod streamlit run app.py
 3. **修复校准身份实时生效问题**：将身份角色读取改为运行时动态获取，切换“在校/辍学”后立即影响评分。
 4. **提升结果可读性**：硬触发与贡献项优先展示题目标题，而非内部 key。
 5. **清理依赖清单**：移除重复项并补充基础版本约束，降低安装歧义。
+6. **新增 Cloudflare 部署版本**：补充 Worker 工程与静态页面 Demo，可直接部署到 Cloudflare Workers/Pages。
 
 ---
 
