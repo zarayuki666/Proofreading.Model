@@ -1,16 +1,22 @@
 # Cloudflare Worker 部署说明
 
-本目录提供项目的边缘部署版本：
+本目录是基于 `risk_dashboard_v4` 规则引擎抽离出的 Cloudflare 部署版本，支持：
 
-- `src/index.ts`：HTTP 路由（`/health`、`/api/evaluate`）
-- `src/engine.ts`：规则引擎核心计算
-- `public/index.html`：静态测试页面
+- `GET /health`：健康检查
+- `GET /api/schema`：接口结构与示例
+- `POST /api/evaluate`：风险研判计算
+  - 支持 `contributions`（与你当前 Streamlit 汇总口径一致）
+  - 也支持 `raw_scores`（0~5 原始分），会按 `adjustment.json` 同源映射进行风险值换算
 
-## 接口约定
+## 目录
 
-### POST `/api/evaluate`
+- `src/index.ts`：路由与 API 出口
+- `src/engine.ts`：规则计算与 raw_scores 映射
+- `public/`：静态演示页面
 
-请求体示例：
+## 请求示例
+
+### 1) contributions 模式
 
 ```json
 {
@@ -21,12 +27,23 @@
 }
 ```
 
-返回：预警级别、净风险分、贡献排序、留痕编号等。
+### 2) raw_scores 模式
+
+```json
+{
+  "case_ctx": { "case_id": "CASE-002" },
+  "raw_scores": [
+    { "key": "b1_2", "label": "暴力攻击倾向", "score": 4, "hard": true },
+    { "key": "e2", "label": "有害内容接触", "score": 5 }
+  ]
+}
+```
 
 ## 本地运行
 
 ```bash
 npm install
+npm run check
 npm run dev
 ```
 
@@ -35,3 +52,5 @@ npm run dev
 ```bash
 npm run deploy
 ```
+
+> 生产建议：在 Cloudflare 控制台为 Worker 绑定 Access 策略、WAF 与 Rate Limiting。
