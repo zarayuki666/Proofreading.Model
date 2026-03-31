@@ -41,6 +41,27 @@
         <p class="muted">Cloudflare Worker 接口：<code>POST /api/evaluate</code></p>
       </aside>
 
+        <div style="display: flex; gap: 8px; margin-top: 10px">
+          <button id="btnSeed">填充示例因子</button>
+          <button id="btnGenerate" class="primary">生成合规研判</button>
+        </div>
+        <p class="muted">Cloudflare Worker 接口：<code>POST /api/evaluate</code></p>
+      </aside>
+    <h1>司法合规驾驶舱（Cloudflare Worker 版 API Demo）</h1>
+    <p>将规则引擎部署到 Cloudflare Workers。你可以在此提交 JSON 测试 <code>/api/evaluate</code>（支持 contributions 与 raw_scores 两种入参）。</p>
+
+    <textarea id="payload">{
+  "case_ctx": {
+    "case_id": "CASE-DEMO-001",
+    "role": "专业人员"
+  },
+  "raw_scores": [
+    {"key":"a3_1","label":"家庭沟通","score":4},
+    {"key":"b1_2","label":"暴力攻击倾向","score":4,"hard":true},
+    {"key":"e2","label":"有害内容接触","score":5,"hard":true}
+  ]
+}</textarea>
+
       <main>
         <header class="header card">
           <div>
@@ -49,6 +70,23 @@
           </div>
           <div id="headerMeta" class="muted"></div>
         </header>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="panel_collect">采集录入</button>
+          <button class="tab" data-tab="panel_cockpit">驾驶舱</button>
+          <button class="tab" data-tab="panel_rules">规则解释</button>
+          <button class="tab" data-tab="panel_audit">审计留痕</button>
+          <button class="tab" data-tab="panel_settings">系统设置</button>
+        </div>
+
+        <section id="panel_collect" class="panel active"><div id="collect"></div></section>
+        <section id="panel_cockpit" class="panel"><div id="cockpit"></div></section>
+        <section id="panel_rules" class="panel"><div id="rules"></div></section>
+        <section id="panel_audit" class="panel"><div id="audit"></div></section>
+        <section id="panel_settings" class="panel"><div id="settings"></div></section>
+      </main>
+    </div>
+
 
         <div class="tabs">
           <button class="tab active" data-tab="panel_collect">采集录入</button>

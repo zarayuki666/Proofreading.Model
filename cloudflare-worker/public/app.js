@@ -1,3 +1,22 @@
+const FACTOR_CATALOG = [
+  { key: "a3_1", label: "A3 家庭沟通" },
+  { key: "a3_2", label: "A3 家庭冲突" },
+  { key: "b1_1", label: "B1 冲动控制" },
+  { key: "b1_2", label: "B1 暴力攻击倾向" },
+  { key: "b3", label: "B3 自我认同" },
+  { key: "c1", label: "C1 同伴关系" },
+  { key: "c2", label: "C2 社区环境" },
+  { key: "d1", label: "D1 在校表现" },
+  { key: "d2", label: "D2 法治教育" },
+  { key: "e1a", label: "E1a 上网时间" },
+  { key: "e1b", label: "E1b 深夜上网" },
+  { key: "e2", label: "E2 内容接触" },
+  { key: "f1", label: "F1 情感支持" },
+  { key: "f2", label: "F2 情感适应能力" },
+  { key: "g1", label: "G1 时间管理" },
+  { key: "g2", label: "G2 财务管理" },
+];
+
 const state = {
   logs: [],
   result: null,
@@ -7,6 +26,16 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const now = () => new Date().toLocaleString("zh-CN", { hour12: false });
+
+function buildDefaultFactors() {
+  return FACTOR_CATALOG.map((x) => ({
+    key: x.key,
+    label: x.label,
+    score: 0,
+    hard: false,
+    explain: "",
+  }));
+}
 
 function addLog(event, payload = {}) {
   state.logs.push({ ts: now(), event, payload });
@@ -27,6 +56,7 @@ function alertClass(level = "") {
 
 function sop(level = "") {
   if (level.includes("红色")) return ["立即启动危机干预小组", "跨部门联动处置", "按日复评与留痕"];
+  if (level.includes("红色")) return ["立即启动危机干预", "多部门会商处置", "按日复评与留痕"];
   if (level.includes("黄色")) return ["纳入重点关注", "制定个性化帮扶计划", "按周复评"];
   if (level.includes("蓝色")) return ["学校社区协同关注", "补齐保护性资源", "常态跟踪"];
   return ["常态记录", "普适性预防", "定期复评"];
@@ -45,6 +75,7 @@ function getCaseCtx() {
 function renderHeader() {
   const ctx = getCaseCtx();
   $("headerMeta").innerHTML = `版本：Cloudflare v3 · 案件：${ctx.case_id} · 角色：${ctx.role}`;
+  $("headerMeta").innerHTML = `版本：Cloudflare v2 · 案件：${ctx.case_id} · 角色：${ctx.role}`;
 }
 
 function ensureResponseForQuestion(qKey, qCfg) {
@@ -62,6 +93,13 @@ function renderScaleInput(name, value, min = 0, max = 5) {
     <div class="scale-row">
       <input type="range" min="${min}" max="${max}" step="1" value="${value}" data-name="${name}" data-kind="range" />
       <input type="number" min="${min}" max="${max}" step="1" value="${value}" data-name="${name}" data-kind="number" />
+    <div class="factor-item">
+      <div><b>${f.key}</b></div>
+      <div>${f.label}</div>
+      <input type="range" min="0" max="5" step="1" value="${f.score}" data-k="score" data-i="${i}" />
+      <input value="${f.score}" type="number" min="0" max="5" step="1" data-k="score_num" data-i="${i}" />
+      <input ${f.hard ? "checked" : ""} type="checkbox" data-k="hard" data-i="${i}" />
+      <input value="${f.explain || ""}" data-k="explain" data-i="${i}" placeholder="备注" />
     </div>`;
 }
 
@@ -237,6 +275,50 @@ function buildContributions() {
         });
       }
     });
+  const rows = state.factors.map(factorRow).join("");
+  $("collect").innerHTML = `
+    <div class="card">
+      <h3>🧾 评估采集面板（与 app.py 因子口径一致）</h3>
+      <p class="small">录入 0~5 原始量表分值，后端会按 adjustment 映射计算风险值。硬触发可手动标记。</p>
+      <div class="small" style="display:grid;grid-template-columns:.6fr 1.2fr .8fr .5fr .4fr 1fr;gap:6px;margin:8px 0"><b>键</b><b>因子</b><b>滑杆</b><b>分值</b><b>硬触发</b><b>备注</b></div>
+      <div class="factor-list">${rows}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button id="resetFactor">恢复默认因子</button>
+      </div>
+    </div>`;
+
+  $("collect").querySelectorAll("[data-k]").forEach((el) => {
+    const syncScore = (i, val) => {
+      const safe = Math.max(0, Math.min(5, Number(val) || 0));
+      state.factors[i].score = safe;
+      renderCollect();
+    };
+
+    el.addEventListener("input", (e) => {
+      const i = Number(e.target.dataset.i);
+      const k = e.target.dataset.k;
+      if (k === "score" || k === "score_num") {
+        syncScore(i, e.target.value);
+        return;
+      }
+      state.factors[i][k] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    });
+
+    el.addEventListener("change", (e) => {
+      const i = Number(e.target.dataset.i);
+      const k = e.target.dataset.k;
+      if (k === "score" || k === "score_num") {
+        syncScore(i, e.target.value);
+        return;
+      }
+      state.factors[i][k] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    });
+  });
+
+  $("resetFactor")?.addEventListener("click", () => {
+    state.factors = buildDefaultFactors();
+    addLog("factor_reset", { n: state.factors.length });
+    renderCollect();
   });
 
   return out;
@@ -249,6 +331,7 @@ function renderCockpit() {
     return;
   }
   const top = (r.contributions || []).slice(0, 12).map((x) => `<tr><td>${x.key}</td><td>${x.label}</td><td>${x.net?.toFixed?.(2) ?? x.net}</td><td>${x.explain || "-"}</td></tr>`).join("");
+  const top = (r.contributions || []).slice(0, 10).map((x) => `<tr><td>${x.key}</td><td>${x.label}</td><td>${x.net?.toFixed?.(2) ?? x.net}</td><td>${x.explain || "-"}</td></tr>`).join("");
   $("cockpit").innerHTML = `
     <div class="grid4">
       <div class="kpi"><div class="small">规则净风险积分</div><div class="v">${Number(r.net_risk_score).toFixed(2)}</div></div>
@@ -275,6 +358,7 @@ function renderRules() {
       <h3>🔎 规则命中解释与可解释性</h3>
       <ul>
         <li>问卷题型：scale / mcq / multi / group / hybrid / hybrid_multi（来源于 app.py）。</li>
+        <li>输入模式：raw_scores（0~5）→ adjustment 映射成 risk。</li>
         <li>中性折扣：neutral_eff = neutral_raw × 0.30。</li>
         <li>保护限幅：按硬触发与核心风险动态限幅。</li>
       </ul>
@@ -303,6 +387,7 @@ function renderAudit() {
 
 function renderSettings() {
   $("settings").innerHTML = `<div class="card"><h3>⚙️ 系统设置</h3><ul><li>当前部署：Cloudflare Workers + Static Assets</li><li>问卷配置：public/questionnaire.schema.json（由 app.py 生成）</li><li>建议：生产开启 Cloudflare Access、WAF 与速率限制。</li></ul></div>`;
+  $("settings").innerHTML = `<div class="card"><h3>⚙️ 系统设置</h3><ul><li>当前部署：Cloudflare Workers + Static Assets</li><li>接口：POST /api/evaluate（raw_scores）</li><li>建议：生产开启 Cloudflare Access、WAF 与速率限制。</li></ul></div>`;
 }
 
 async function evaluateNow() {
@@ -313,6 +398,13 @@ async function evaluateNow() {
   const payload = {
     case_ctx: getCaseCtx(),
     contributions: buildContributions(),
+    raw_scores: state.factors.map((x) => ({
+      key: x.key,
+      label: x.label,
+      score: Number(x.score) || 0,
+      hard: Boolean(x.hard),
+      explain: x.explain || "",
+    })),
   };
 
   const res = await fetch("/api/evaluate", {
@@ -353,6 +445,21 @@ function seedQuestionnaire() {
     });
   });
   addLog("seed_loaded", { questions: Object.keys(state.responses).length });
+function seedFactors() {
+  state.factors = buildDefaultFactors();
+  const boost = {
+    a3_1: 4,
+    b1_2: 4,
+    e2: 5,
+    c1: 4,
+  };
+  state.factors = state.factors.map((x) => ({
+    ...x,
+    score: boost[x.key] ?? 1,
+    hard: x.key === "b1_2" || x.key === "e2",
+    explain: boost[x.key] ? "示例高风险" : "示例低风险",
+  }));
+  addLog("seed_loaded", { n: state.factors.length });
   renderCollect();
 }
 
@@ -383,6 +490,8 @@ async function loadSchema() {
 }
 
 async function init() {
+function init() {
+  state.factors = buildDefaultFactors();
   $("caseId").value = defaultCaseId();
   ["role", "caseId", "org", "evaluator", "studentType"].forEach((id) => $(id).addEventListener("input", renderHeader));
   $("btnGenerate").addEventListener("click", evaluateNow);
@@ -398,6 +507,7 @@ async function init() {
   }
 
   addLog("app_loaded", { version: "cloudflare-ui-v3" });
+  addLog("app_loaded", { version: "cloudflare-ui-v2" });
   renderAll();
 }
 
