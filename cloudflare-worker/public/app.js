@@ -1,3 +1,22 @@
+const FACTOR_CATALOG = [
+  { key: "a3_1", label: "A3 家庭沟通" },
+  { key: "a3_2", label: "A3 家庭冲突" },
+  { key: "b1_1", label: "B1 冲动控制" },
+  { key: "b1_2", label: "B1 暴力攻击倾向" },
+  { key: "b3", label: "B3 自我认同" },
+  { key: "c1", label: "C1 同伴关系" },
+  { key: "c2", label: "C2 社区环境" },
+  { key: "d1", label: "D1 在校表现" },
+  { key: "d2", label: "D2 法治教育" },
+  { key: "e1a", label: "E1a 上网时间" },
+  { key: "e1b", label: "E1b 深夜上网" },
+  { key: "e2", label: "E2 内容接触" },
+  { key: "f1", label: "F1 情感支持" },
+  { key: "f2", label: "F2 情感适应能力" },
+  { key: "g1", label: "G1 时间管理" },
+  { key: "g2", label: "G2 财务管理" },
+];
+
 const state = {
   logs: [],
   result: null,
@@ -6,6 +25,16 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const now = () => new Date().toLocaleString("zh-CN", { hour12: false });
+
+function buildDefaultFactors() {
+  return FACTOR_CATALOG.map((x) => ({
+    key: x.key,
+    label: x.label,
+    score: 0,
+    hard: false,
+    explain: "",
+  }));
+}
 
 function addLog(event, payload = {}) {
   state.logs.push({ ts: now(), event, payload });
@@ -25,10 +54,10 @@ function alertClass(level = "") {
 }
 
 function sop(level = "") {
-  if (level.includes("红色")) return ["启动应急复核", "跨部门联动", "最小必要告知"];
-  if (level.includes("黄色")) return ["纳入重点关注", "制定干预计划", "按周复评"];
-  if (level.includes("蓝色")) return ["常态跟踪", "补齐保护性资源"];
-  return ["常态记录", "定期复评"];
+  if (level.includes("红色")) return ["立即启动危机干预", "多部门会商处置", "按日复评与留痕"];
+  if (level.includes("黄色")) return ["纳入重点关注", "制定个性化帮扶计划", "按周复评"];
+  if (level.includes("蓝色")) return ["学校社区协同关注", "补齐保护性资源", "常态跟踪"];
+  return ["常态记录", "普适性预防", "定期复评"];
 }
 
 function getCaseCtx() {
@@ -43,19 +72,18 @@ function getCaseCtx() {
 
 function renderHeader() {
   const ctx = getCaseCtx();
-  $("headerMeta").innerHTML = `版本：Cloudflare v1 · 案件：${ctx.case_id} · 角色：${ctx.role}`;
+  $("headerMeta").innerHTML = `版本：Cloudflare v2 · 案件：${ctx.case_id} · 角色：${ctx.role}`;
 }
 
 function factorRow(f, i) {
   return `
     <div class="factor-item">
-      <input value="${f.label}" data-k="label" data-i="${i}" placeholder="因子名称" />
-      <input value="${f.risk}" type="number" step="0.1" data-k="risk" data-i="${i}" />
-      <input value="${f.neutral_raw}" type="number" step="0.1" data-k="neutral_raw" data-i="${i}" />
-      <input value="${f.protection}" type="number" step="0.1" data-k="protection" data-i="${i}" />
+      <div><b>${f.key}</b></div>
+      <div>${f.label}</div>
+      <input type="range" min="0" max="5" step="1" value="${f.score}" data-k="score" data-i="${i}" />
+      <input value="${f.score}" type="number" min="0" max="5" step="1" data-k="score_num" data-i="${i}" />
       <input ${f.hard ? "checked" : ""} type="checkbox" data-k="hard" data-i="${i}" />
-      <input value="${f.explain || ""}" data-k="explain" data-i="${i}" placeholder="说明" />
-      <button class="danger" data-del="${i}">删除</button>
+      <input value="${f.explain || ""}" data-k="explain" data-i="${i}" placeholder="备注" />
     </div>`;
 }
 
@@ -63,41 +91,46 @@ function renderCollect() {
   const rows = state.factors.map(factorRow).join("");
   $("collect").innerHTML = `
     <div class="card">
-      <h3>🧾 评估采集面板（完整录入）</h3>
-      <p class="small">输入每个风险因子的风险/中性/保护值，支持硬触发标记，与你原系统规则引擎的汇总方向一致。</p>
-      <div class="factor-list">${rows || "<p class='small'>暂无因子，请点击“新增因子”或“填充示例因子”。</p>"}</div>
+      <h3>🧾 评估采集面板（与 app.py 因子口径一致）</h3>
+      <p class="small">录入 0~5 原始量表分值，后端会按 adjustment 映射计算风险值。硬触发可手动标记。</p>
+      <div class="small" style="display:grid;grid-template-columns:.6fr 1.2fr .8fr .5fr .4fr 1fr;gap:6px;margin:8px 0"><b>键</b><b>因子</b><b>滑杆</b><b>分值</b><b>硬触发</b><b>备注</b></div>
+      <div class="factor-list">${rows}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button id="addFactor">+ 新增因子</button>
-        <button id="clearFactor">清空</button>
+        <button id="resetFactor">恢复默认因子</button>
       </div>
     </div>`;
 
   $("collect").querySelectorAll("[data-k]").forEach((el) => {
+    const syncScore = (i, val) => {
+      const safe = Math.max(0, Math.min(5, Number(val) || 0));
+      state.factors[i].score = safe;
+      renderCollect();
+    };
+
     el.addEventListener("input", (e) => {
       const i = Number(e.target.dataset.i);
       const k = e.target.dataset.k;
+      if (k === "score" || k === "score_num") {
+        syncScore(i, e.target.value);
+        return;
+      }
       state.factors[i][k] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     });
+
     el.addEventListener("change", (e) => {
       const i = Number(e.target.dataset.i);
       const k = e.target.dataset.k;
+      if (k === "score" || k === "score_num") {
+        syncScore(i, e.target.value);
+        return;
+      }
       state.factors[i][k] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     });
   });
 
-  $("collect").querySelectorAll("[data-del]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.factors.splice(Number(btn.dataset.del), 1);
-      renderCollect();
-    });
-  });
-
-  $("addFactor")?.addEventListener("click", () => {
-    state.factors.push({ label: "新因子", risk: 0, neutral_raw: 0, protection: 0, hard: false, explain: "" });
-    renderCollect();
-  });
-  $("clearFactor")?.addEventListener("click", () => {
-    state.factors = [];
+  $("resetFactor")?.addEventListener("click", () => {
+    state.factors = buildDefaultFactors();
+    addLog("factor_reset", { n: state.factors.length });
     renderCollect();
   });
 }
@@ -105,15 +138,15 @@ function renderCollect() {
 function renderCockpit() {
   const r = state.result;
   if (!r) {
-    $("cockpit").innerHTML = `<div class="card"><h3>⚖️ 司法合规驾驶舱</h3><p class="small">尚未生成研判结果，请先在左侧点击“生成合规研判”。</p></div>`;
+    $("cockpit").innerHTML = `<div class="card"><h3>⚖️ 司法合规驾驶舱</h3><p class="small">尚未生成研判结果，请先点击“生成合规研判”。</p></div>`;
     return;
   }
-  const top = (r.contributions || []).slice(0, 8).map((x) => `<tr><td>${x.label}</td><td>${x.net?.toFixed?.(2) ?? x.net}</td><td>${x.explain || "-"}</td></tr>`).join("");
+  const top = (r.contributions || []).slice(0, 10).map((x) => `<tr><td>${x.key}</td><td>${x.label}</td><td>${x.net?.toFixed?.(2) ?? x.net}</td><td>${x.explain || "-"}</td></tr>`).join("");
   $("cockpit").innerHTML = `
     <div class="grid4">
-      <div class="kpi"><div class="small">规则净风险积分</div><div class="v">${Number(r.net_risk_score).toFixed(1)}</div></div>
-      <div class="kpi"><div class="small">总风险分</div><div class="v">${Number(r.total_risk_score).toFixed(1)}</div></div>
-      <div class="kpi"><div class="small">总保护分</div><div class="v">${Number(r.total_protection_score).toFixed(1)}</div></div>
+      <div class="kpi"><div class="small">规则净风险积分</div><div class="v">${Number(r.net_risk_score).toFixed(2)}</div></div>
+      <div class="kpi"><div class="small">总风险分</div><div class="v">${Number(r.total_risk_score).toFixed(2)}</div></div>
+      <div class="kpi"><div class="small">总保护分</div><div class="v">${Number(r.total_protection_score).toFixed(2)}</div></div>
       <div class="kpi"><div class="small">预警等级</div><div class="badge ${alertClass(r.alert?.level)}">${r.alert?.level || "-"}</div></div>
     </div>
     <div class="card" style="margin-top:12px">
@@ -124,7 +157,7 @@ function renderCockpit() {
     </div>
     <div class="card" style="margin-top:12px">
       <h3>🧠 TOP 风险因子</h3>
-      <table class="table"><thead><tr><th>因子</th><th>净贡献</th><th>说明</th></tr></thead><tbody>${top || "<tr><td colspan='3'>暂无</td></tr>"}</tbody></table>
+      <table class="table"><thead><tr><th>Key</th><th>因子</th><th>净贡献</th><th>说明</th></tr></thead><tbody>${top || "<tr><td colspan='4'>暂无</td></tr>"}</tbody></table>
     </div>`;
 }
 
@@ -134,7 +167,7 @@ function renderRules() {
     <div class="card">
       <h3>🔎 规则命中解释与可解释性</h3>
       <ul>
-        <li>规则引擎：按因子汇总 risk / neutral / protection。</li>
+        <li>输入模式：raw_scores（0~5）→ adjustment 映射成 risk。</li>
         <li>中性折扣：neutral_eff = neutral_raw × 0.30。</li>
         <li>保护限幅：按硬触发和核心风险动态限制抵消比例。</li>
       </ul>
@@ -163,27 +196,20 @@ function renderAudit() {
 }
 
 function renderSettings() {
-  $("settings").innerHTML = `<div class="card"><h3>⚙️ 系统设置</h3><ul><li>当前部署：Cloudflare Workers + Static Assets</li><li>接口：POST /api/evaluate</li><li>建议：生产开启 Cloudflare Access 与速率限制。</li></ul></div>`;
+  $("settings").innerHTML = `<div class="card"><h3>⚙️ 系统设置</h3><ul><li>当前部署：Cloudflare Workers + Static Assets</li><li>接口：POST /api/evaluate（raw_scores）</li><li>建议：生产开启 Cloudflare Access、WAF 与速率限制。</li></ul></div>`;
 }
 
 async function evaluateNow() {
   const payload = {
     case_ctx: getCaseCtx(),
-    contributions: state.factors.map((x, i) => ({
-      key: `f_${i + 1}`,
-      label: x.label || `因子${i + 1}`,
-      risk: Number(x.risk) || 0,
-      neutral_raw: Number(x.neutral_raw) || 0,
-      protection: Number(x.protection) || 0,
+    raw_scores: state.factors.map((x) => ({
+      key: x.key,
+      label: x.label,
+      score: Number(x.score) || 0,
       hard: Boolean(x.hard),
       explain: x.explain || "",
     })),
   };
-
-  if (!payload.contributions.length) {
-    alert("请先在采集面板添加至少一个因子");
-    return;
-  }
 
   const res = await fetch("/api/evaluate", {
     method: "POST",
@@ -203,12 +229,19 @@ async function evaluateNow() {
 }
 
 function seedFactors() {
-  state.factors = [
-    { label: "A1 监护状况", risk: 4.4, neutral_raw: 1, protection: 0, hard: false, explain: "监护薄弱" },
-    { label: "B1 攻击倾向", risk: 3, neutral_raw: 0, protection: 0, hard: true, explain: "频繁冲突" },
-    { label: "E2 有害内容接触", risk: 4, neutral_raw: 0, protection: 0, hard: true, explain: "高频暴力内容" },
-    { label: "F1 情感支持", risk: 0, neutral_raw: 0, protection: 2, hard: false, explain: "存在一定支持" },
-  ];
+  state.factors = buildDefaultFactors();
+  const boost = {
+    a3_1: 4,
+    b1_2: 4,
+    e2: 5,
+    c1: 4,
+  };
+  state.factors = state.factors.map((x) => ({
+    ...x,
+    score: boost[x.key] ?? 1,
+    hard: x.key === "b1_2" || x.key === "e2",
+    explain: boost[x.key] ? "示例高风险" : "示例低风险",
+  }));
   addLog("seed_loaded", { n: state.factors.length });
   renderCollect();
 }
@@ -234,12 +267,13 @@ function renderAll() {
 }
 
 function init() {
+  state.factors = buildDefaultFactors();
   $("caseId").value = defaultCaseId();
   ["role", "caseId", "org", "evaluator", "studentType"].forEach((id) => $(id).addEventListener("input", renderHeader));
   $("btnGenerate").addEventListener("click", evaluateNow);
   $("btnSeed").addEventListener("click", seedFactors);
   initTabs();
-  addLog("app_loaded", { version: "cloudflare-ui-v1" });
+  addLog("app_loaded", { version: "cloudflare-ui-v2" });
   renderAll();
 }
 

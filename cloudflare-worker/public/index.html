@@ -3,50 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>司法合规驾驶舱 · Cloudflare Worker</title>
-    <style>
-      body{font-family:system-ui,-apple-system,sans-serif;max-width:980px;margin:24px auto;padding:0 16px;background:#0b1220;color:#e6edf7}
-      textarea{width:100%;height:300px;background:#111a2b;color:#e6edf7;border:1px solid #2b3a57;border-radius:8px;padding:12px}
-      button{margin-top:12px;padding:10px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
-      pre{background:#111a2b;border:1px solid #2b3a57;padding:12px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
-      code{background:#162036;padding:2px 6px;border-radius:4px}
-    </style>
+    <title>司法合规驾驶舱 · Cloudflare Worker 版</title>
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <h1>司法合规驾驶舱（Cloudflare Worker 版 API Demo）</h1>
-    <p>将规则引擎部署到 Cloudflare Workers。你可以在此直接提交 JSON 测试 <code>/api/evaluate</code>。</p>
+    <div class="layout">
+      <aside class="sidebar card">
+        <h3 style="margin-top: 0">🧭 基础信息</h3>
+        <label>案件编号
+          <input id="caseId" placeholder="CASE-20260331-xxxx" />
+        </label>
+        <label>评估角色
+          <select id="role">
+            <option>专业人员</option>
+            <option>班主任</option>
+            <option>心理老师</option>
+            <option>社区工作者</option>
+          </select>
+        </label>
+        <label>机构
+          <input id="org" placeholder="某某学校 / 社区" />
+        </label>
+        <label>评估人
+          <input id="evaluator" placeholder="姓名或工号" />
+        </label>
+        <label>学生类型
+          <select id="studentType">
+            <option value="在校">在校</option>
+            <option value="辍学">辍学</option>
+          </select>
+        </label>
 
-    <textarea id="payload">{
-  "case_ctx": {
-    "case_id": "CASE-DEMO-001",
-    "role": "专业人员"
-  },
-  "contributions": [
-    {"key":"a1","label":"监护状况","risk":4.4,"neutral_raw":1,"protection":0,"hard":false},
-    {"key":"b1_2","label":"暴力攻击倾向","risk":3,"neutral_raw":0,"protection":0,"hard":true},
-    {"key":"f1","label":"情感支持","risk":0,"neutral_raw":0,"protection":2,"hard":false}
-  ]
-}</textarea>
+        <div style="display: flex; gap: 8px; margin-top: 10px">
+          <button id="btnSeed">填充示例因子</button>
+          <button id="btnGenerate" class="primary">生成合规研判</button>
+        </div>
+        <p class="muted">Cloudflare Worker 接口：<code>POST /api/evaluate</code></p>
+      </aside>
 
-    <button id="run">生成研判</button>
-    <pre id="result">等待请求...</pre>
+      <main>
+        <header class="header card">
+          <div>
+            <h1>⚖️ 司法合规驾驶舱（Cloudflare 版）</h1>
+            <p>与 <code>risk_dashboard_v4/app.py</code> 同源规则引擎口径（风险/中性/保护 + 硬触发 + 审计导出）。</p>
+          </div>
+          <div id="headerMeta" class="muted"></div>
+        </header>
 
-    <script>
-      document.getElementById('run').addEventListener('click', async () => {
-        const resultEl = document.getElementById('result');
-        try {
-          const payload = JSON.parse(document.getElementById('payload').value);
-          const res = await fetch('/api/evaluate', {
-            method: 'POST',
-            headers: {'content-type': 'application/json'},
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          resultEl.textContent = JSON.stringify(data, null, 2);
-        } catch (e) {
-          resultEl.textContent = '请求失败: ' + e.message;
-        }
-      });
-    </script>
+        <div class="tabs">
+          <button class="tab active" data-tab="panel_collect">采集录入</button>
+          <button class="tab" data-tab="panel_cockpit">驾驶舱</button>
+          <button class="tab" data-tab="panel_rules">规则解释</button>
+          <button class="tab" data-tab="panel_audit">审计留痕</button>
+          <button class="tab" data-tab="panel_settings">系统设置</button>
+        </div>
+
+        <section id="panel_collect" class="panel active"><div id="collect"></div></section>
+        <section id="panel_cockpit" class="panel"><div id="cockpit"></div></section>
+        <section id="panel_rules" class="panel"><div id="rules"></div></section>
+        <section id="panel_audit" class="panel"><div id="audit"></div></section>
+        <section id="panel_settings" class="panel"><div id="settings"></div></section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
   </body>
 </html>

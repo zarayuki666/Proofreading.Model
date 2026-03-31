@@ -1,32 +1,50 @@
-# Cloudflare Worker 部署说明
+# Cloudflare Worker 部署说明（对齐 risk_dashboard_v4）
 
-本目录提供项目的边缘部署版本：
+本目录是基于 `risk_dashboard_v4/app.py` 规则口径抽离出的 Cloudflare 版本，目标是：
 
-- `src/index.ts`：HTTP 路由（`/health`、`/api/evaluate`）
-- `src/engine.ts`：规则引擎核心计算
-- `public/index.html`：静态测试页面
+- 前端交互流程与原项目一致（采集 → 生成研判 → 规则解释 → 审计导出）
+- 后端规则输出结构一致（净风险、预警级别、硬触发、贡献项、eval_id）
+- 输入支持 `raw_scores`（0~5）并按同源 `adjustment` 映射为风险值
 
-## 接口约定
+## 接口
 
-### POST `/api/evaluate`
+- `GET /health`
+- `GET /api/schema`
+- `POST /api/evaluate`
 
-请求体示例：
+### 请求体（推荐 raw_scores）
 
 ```json
 {
-  "case_ctx": { "case_id": "CASE-001" },
-  "contributions": [
-    { "key": "a1", "label": "监护状况", "risk": 4.4, "neutral_raw": 1, "protection": 0, "hard": false }
+  "case_ctx": {
+    "case_id": "CASE-001",
+    "role": "专业人员",
+    "student_type": "在校"
+  },
+  "raw_scores": [
+    { "key": "a3_1", "label": "A3 家庭沟通", "score": 4 },
+    { "key": "b1_2", "label": "B1 暴力攻击倾向", "score": 4, "hard": true }
   ]
 }
 ```
 
-返回：预警级别、净风险分、贡献排序、留痕编号等。
+> 兼容模式：仍支持 `contributions` 直接输入。
+
+## 前端页面
+
+`public/index.html` + `public/app.js` + `public/style.css` 提供完整驾驶舱页面：
+
+- 左侧基础信息
+- 采集录入（16 个同源因子）
+- 驾驶舱 KPI 与处置建议
+- 规则解释
+- 审计留痕与导出
 
 ## 本地运行
 
 ```bash
 npm install
+npm run check
 npm run dev
 ```
 
