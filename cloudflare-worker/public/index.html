@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>司法合规驾驶舱 · Cloudflare Worker</title>
+    <style>
+      body{font-family:system-ui,-apple-system,sans-serif;max-width:980px;margin:24px auto;padding:0 16px;background:#0b1220;color:#e6edf7}
+      textarea{width:100%;height:300px;background:#111a2b;color:#e6edf7;border:1px solid #2b3a57;border-radius:8px;padding:12px}
+      button{margin-top:12px;padding:10px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+      pre{background:#111a2b;border:1px solid #2b3a57;padding:12px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+      code{background:#162036;padding:2px 6px;border-radius:4px}
+    </style>
+  </head>
+  <body>
+    <h1>司法合规驾驶舱（Cloudflare Worker 版 API Demo）</h1>
+    <p>将规则引擎部署到 Cloudflare Workers。你可以在此直接提交 JSON 测试 <code>/api/evaluate</code>。</p>
+
+    <textarea id="payload">{
+  "case_ctx": {
+    "case_id": "CASE-DEMO-001",
+    "role": "专业人员"
+  },
+  "contributions": [
+    {"key":"a1","label":"监护状况","risk":4.4,"neutral_raw":1,"protection":0,"hard":false},
+    {"key":"b1_2","label":"暴力攻击倾向","risk":3,"neutral_raw":0,"protection":0,"hard":true},
+    {"key":"f1","label":"情感支持","risk":0,"neutral_raw":0,"protection":2,"hard":false}
+  ]
+}</textarea>
+
+    <button id="run">生成研判</button>
+    <pre id="result">等待请求...</pre>
+
+    <script>
+      document.getElementById('run').addEventListener('click', async () => {
+        const resultEl = document.getElementById('result');
+        try {
+          const payload = JSON.parse(document.getElementById('payload').value);
+          const res = await fetch('/api/evaluate', {
+            method: 'POST',
+            headers: {'content-type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          resultEl.textContent = '请求失败: ' + e.message;
+        }
+      });
+    </script>
+  </body>
+</html>
