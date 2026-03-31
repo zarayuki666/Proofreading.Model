@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>司法合规驾驶舱 · Cloudflare 版</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar card">
+        <h2>⚙️ 案件上下文</h2>
+        <label>使用角色
+          <select id="role">
+            <option>专业人员</option>
+            <option>管理员</option>
+            <option>观察者</option>
+          </select>
+        </label>
+        <label>案件编号
+          <input id="caseId" />
+        </label>
+        <label>机构/单位
+          <input id="org" />
+        </label>
+        <label>评估人员
+          <input id="evaluator" />
+        </label>
+        <label>学生类型
+          <select id="studentType">
+            <option>在校学生</option>
+            <option>辍学/已离校青少年</option>
+          </select>
+        </label>
+        <button id="btnGenerate" class="primary">🚦 生成合规研判</button>
+        <button id="btnSeed">⚡ 填充示例因子</button>
+      </aside>
+
+      <main class="main">
+        <section class="header card">
+          <div>
+            <h1>⚖️ 司法合规驾驶舱（Cloudflare 完整版）</h1>
+            <p>未成年人风险动态评估 · 分级干预 · 合规留痕</p>
+          </div>
+          <div class="muted" id="headerMeta"></div>
+        </section>
+
+        <nav class="tabs">
+          <button class="tab active" data-tab="cockpit">⚖️ 司法合规驾驶舱</button>
+          <button class="tab" data-tab="collect">🧾 评估采集面板</button>
+          <button class="tab" data-tab="rules">🔎 规则命中解释</button>
+          <button class="tab" data-tab="audit">🗂️ 审计留痕与导出</button>
+          <button class="tab" data-tab="settings">⚙️ 系统设置</button>
+        </nav>
+
+        <section id="cockpit" class="panel active"></section>
+        <section id="collect" class="panel"></section>
+        <section id="rules" class="panel"></section>
+        <section id="audit" class="panel"></section>
+        <section id="settings" class="panel"></section>
+      </main>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
